@@ -499,4 +499,4 @@ if __name__ == '__main__':
             db.commit()
 
     sensor_sim.start()
-    app.run()
+    app.run(port=8080)
