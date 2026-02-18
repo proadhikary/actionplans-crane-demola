@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Crane Prescriptive Maintenance{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+    <div class="container">
+        <nav>
+            <a href="/" class="logo">CRANE.AI</a>
+            <div class="nav-links">
+                <a href="/owner" class="nav-link {% if request.path == '/owner' %}active{% endif %}">Owner</a>
+                <a href="/maintenance"
+                    class="nav-link {% if request.path == '/maintenance' %}active{% endif %}">Maintenance</a>
+                <a href="/technician"
+                    class="nav-link {% if request.path == '/technician' %}active{% endif %}">Technician</a>
+            </div>
+        </nav>
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <script>
+        // Global helper to format dates
+        function formatDate(isoString) {
+            return new Date(isoString).toLocaleString();
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

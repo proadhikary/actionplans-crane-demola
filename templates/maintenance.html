@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="header">
+    <h1>Maintenance Planner</h1>
+    <p>Resource Logistics & Scheduling</p>
+</div>
+
+<div class="grid">
+    <!-- Component Status -->
+    <div class="card glass role-maintenance">
+        <h3>Component Health & Wear</h3>
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span style="color: var(--text-secondary);">Main Bearing (B-54)</span>
+                    <span id="bearing-wear">--%</span>
+                </div>
+                <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                    <div id="bearing-bar" style="width: 0%; height: 100%; background: var(--accent-green);"></div>
+                </div>
+            </div>
+
+            <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span style="color: var(--text-secondary);">Hoist Motor Integrity</span>
+                    <span id="motor-wear">--%</span>
+                </div>
+                <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                    <div id="motor-bar" style="width: 0%; height: 100%; background: var(--accent-green);"></div>
+                </div>
+            </div>
+
+            <div style="margin-top: 10px; display: flex; justify-content: space-between; text-align: center;">
+                <div>
+                    <div style="color: var(--text-secondary); font-size: 0.8em;">Load Cycles</div>
+                    <div class="metric" style="font-size: 1.5em;" id="load-cycles">---</div>
+                </div>
+                <div>
+                    <div style="color: var(--text-secondary); font-size: 0.8em;">Est. Failure</div>
+                    <div class="metric" style="font-size: 1.5em;">~14 Days</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parts Order -->
+    <div class="card glass">
+        <h3>Spare Parts Inventory</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+            <tr style="text-align: left; color: var(--text-secondary); border-bottom: 1px solid var(--card-border);">
+                <th style="padding-bottom: 8px;">Part</th>
+                <th style="padding-bottom: 8px;">Stock</th>
+                <th style="padding-bottom: 8px;">Action</th>
+            </tr>
+            <tbody id="inventory-body">
+                <!-- Injected via JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="glass card" style="margin-top: 24px;">
+    <h3>Planning Recommendation</h3>
+    <div id="planning-prescription">
+        <p style="color: var(--text-secondary);">Analyzing logistics...</p>
+    </div>
+</div>
+
+<!-- Logistics History -->
+<div class="card glass" style="margin-top: 24px;">
+    <h3>Logistics History</h3>
+    <div id="maintenance-log" style="max-height: 200px; overflow-y: auto;">
+        <!-- Logs injected here -->
+        <p style="color: var(--text-secondary); font-style: italic;">Loading history...</p>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    window.requestPart = async function (partName) {
+        if (!confirm(`Confirm order request for: ${partName}?`)) return;
+
+        try {
+            const res = await fetch('/api/parts/request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ part: partName, role: 'Maintenance Lead' })
+            });
+            if (res.ok) {
+                alert("Order request sent to Owner for approval.");
+                loadData();
+            } else {
+                alert("Failed to send request.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error sending request.");
+        }
+    }
+
+    window.logAction = async function (role, action, details, eventId) {
+        if (!confirm(`Confirm action: ${action}?`)) return;
+
+        try {
+            await fetch('/api/log_action', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role, action, details, event_id: eventId })
+            });
+            alert("Action logged to system.");
+            // Reload data to show updated logs
+            if (typeof loadData === 'function') {
+                loadData();
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Failed to log action.");
+        }
+    }
+</script>
+<script>
+    async function loadData() {
+        try {
+            // 1. Fetch Telemetry
+            const telemetryRes = await fetch('/api/telemetry');
+            const tm = await telemetryRes.json();
+            document.getElementById('load-cycles').innerText = tm.load_cycles.toLocaleString();
+
+            const bearingWear = Math.round(tm.main_bearing * 100);
+            const motorWear = Math.round(tm.hoist_motor * 100);
+
+            document.getElementById('bearing-wear').innerText = bearingWear + '% Wear';
+            document.getElementById('motor-wear').innerText = motorWear + '% Wear';
+
+            document.getElementById('bearing-bar').style.width = bearingWear + '%';
+            document.getElementById('bearing-bar').style.backgroundColor = bearingWear > 80 ? 'var(--accent-red)' : (bearingWear > 50 ? 'var(--accent-yellow)' : 'var(--accent-green)');
+
+            document.getElementById('motor-bar').style.width = motorWear + '%';
+            document.getElementById('motor-bar').style.backgroundColor = motorWear > 80 ? 'var(--accent-red)' : (motorWear > 50 ? 'var(--accent-yellow)' : 'var(--accent-green)');
+
+            // 2. Fetch Inventory & Parts
+            const [invRes, reqRes] = await Promise.all([
+                fetch('/api/inventory'),
+                fetch('/api/parts/requests?status=pending')
+            ]);
+            const inventory = await invRes.json();
+            const pendingRequests = await reqRes.json();
+            const pendingParts = new Set(pendingRequests.map(r => r.part_name));
+
+            const tbody = document.getElementById('inventory-body');
+            tbody.innerHTML = '';
+
+            const parts = [
+                { name: "Main Bearing (B-54)", limit: 2 },
+                { name: "Hoist Motor", limit: 3 },
+                { name: "Hydraulic Filter", limit: 5 }
+            ];
+
+            parts.forEach(part => {
+                const count = inventory[part.name] || 0;
+                let stockColor = 'var(--accent-green)';
+                let statusText = `${count} (OK)`;
+
+                if (count < part.limit) {
+                    stockColor = 'var(--accent-red)';
+                    statusText = `${count} (Low)`;
+                } else if (count === part.limit) {
+                    stockColor = 'var(--accent-yellow)';
+                    statusText = `${count} (Reserve)`;
+                }
+
+                const isPending = pendingParts.has(part.name);
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="padding: 12px 0;">${part.name}</td>
+                    <td style="color: ${stockColor};">${statusText}</td>
+                    <td style="text-align: right;">
+                        ${isPending
+                        ? `<span class="status-badge" style="background: rgba(245, 158, 11, 0.1); color: var(--accent-yellow); border: 1px solid var(--accent-yellow);">Pending Approval</span>`
+                        : `<button onclick="requestPart('${part.name}')" class="btn btn-outline" style="font-size: 0.8em; padding: 4px 8px;">Order</button>`
+                    }
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // 3. Fetch Maintenance Logs
+            const logRes = await fetch('/api/audit_log?role=Maintenance Lead');
+            const logs = await logRes.json();
+            const logContainer = document.getElementById('maintenance-log');
+
+            if (logs.length === 0) {
+                logContainer.innerHTML = '<p style="color: var(--text-secondary); font-style: italic;">No recent activity.</p>';
+            } else {
+                logContainer.innerHTML = logs.map(l => `
+                    <div style="border-bottom: 1px solid var(--card-border); padding: 8px 0; font-size: 0.9em;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                            <strong style="color: var(--accent-blue);">${l.action}</strong>
+                            <span style="color: var(--text-secondary); font-size: 0.8em;">${new Date(l.timestamp).toLocaleTimeString()}</span>
+                        </div>
+                        <div style="color: var(--text-secondary);">${l.details}</div>
+                    </div>
+                `).join('');
+            }
+
+            // 4. Fetch Events & Actions
+            const response = await fetch('/api/events?status=active');
+            const events = await response.json();
+
+            const decisionDiv = document.getElementById('planning-prescription');
+
+            if (events.length > 0) {
+                decisionDiv.innerHTML = '';
+                events.forEach(event => {
+                    if (event.prescription && event.prescription.role_guidance) {
+                        // Check if action already taken
+                        const actionTaken = logs.find(l =>
+                            l.event_id === event.id &&
+                            (l.action === 'Scheduled Repair' || l.action === 'Expedite Parts')
+                        );
+
+                        const card = document.createElement('div');
+                        const safeType = event.type.replace(/'/g, "\\'");
+
+                        if (actionTaken) {
+                            // Render "Action Taken" state
+                            card.innerHTML = `
+                                <div style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid var(--accent-green); padding: 20px; border-radius: 8px; margin-bottom: 16px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                                        <h4 style="color: var(--accent-green); margin-bottom: 8px;">Action Logged: ${event.type}</h4>
+                                        <span class="status-badge" style="background: var(--accent-green); color: black;">${actionTaken.action}</span>
+                                    </div>
+                                    <p style="margin-bottom: 0; color: var(--text-secondary);">
+                                        <strong style="color: var(--text-primary);">Details:</strong> ${actionTaken.details}
+                                    </p>
+                                    <p style="margin-top: 8px; font-size: 0.9em; color: var(--text-secondary);">
+                                        Status: Technicians notified. Repair in progress.
+                                    </p>
+                                </div>
+                            `;
+                        } else {
+                            // NEW: Check for Owner Decision
+                            let controlHtml = '';
+                            if (event.owner_decision) {
+                                controlHtml = `
+                                    <div style="margin-bottom: 12px; padding: 8px; background: rgba(59, 130, 246, 0.1); border-radius: 4px; border-left: 2px solid var(--accent-blue);">
+                                        <strong style="color: var(--accent-blue);">Executive Decision:</strong> ${event.owner_decision}
+                                    </div>
+                                    <div style="display: flex; gap: 12px;">
+                                        <button onclick="logAction('Maintenance Lead', 'Scheduled Repair', 'Scheduled repair for ${safeType}', '${event.id}')" class="btn btn-primary" style="background: var(--accent-yellow); color: black;">Schedule Repair</button>
+                                        <button onclick="logAction('Maintenance Lead', 'Expedited Parts', 'Expedited parts for ${safeType}', '${event.id}')" class="btn btn-outline">Expedite Parts</button>
+                                    </div>
+                                `;
+                            } else {
+                                controlHtml = `
+                                    <div style="margin-bottom: 12px; padding: 8px; background: rgba(239, 68, 68, 0.1); border-radius: 4px; border-left: 2px solid var(--accent-red);">
+                                        <strong style="color: var(--accent-red);">Waiting for Executive Decision</strong>
+                                        <p style="margin: 4px 0 0 0; font-size: 0.9em; color: var(--text-secondary);">Maintenance actions are paused until Owner review.</p>
+                                    </div>
+                                    <div style="display: flex; gap: 12px; opacity: 0.5; pointer-events: none;">
+                                        <button class="btn btn-primary" style="background: var(--accent-yellow); color: black;">Schedule Repair</button>
+                                        <button class="btn btn-outline">Expedite Parts</button>
+                                    </div>
+                                `;
+                            }
+
+                            card.innerHTML = `
+                                <div style="background: rgba(255, 234, 0, 0.1); border-left: 4px solid var(--accent-yellow); padding: 20px; border-radius: 8px; margin-bottom: 16px;">
+                                    <h4 style="color: var(--accent-yellow); margin-bottom: 8px;">Active Alert: ${event.type}</h4>
+                                    <p style="margin-bottom: 16px;"><strong>Guidance:</strong> ${event.prescription.role_guidance.maintenance_lead}</p>
+                                    ${controlHtml}
+                                </div>
+                            `;
+                        }
+                        decisionDiv.appendChild(card);
+                    }
+                });
+            } else {
+                decisionDiv.innerHTML = '<p style="color: var(--text-secondary);">No active maintenance requests.</p>';
+            }
+
+        } catch (e) {
+            console.error("Data fetch error:", e);
+        }
+    }
+
+    setInterval(loadData, 3000);
+    loadData();
+</script>
+{% endblock %}

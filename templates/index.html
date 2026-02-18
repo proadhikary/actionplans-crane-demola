@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="text-align: center; margin-top: 100px;">
+    <h1>Select Your Role</h1>
+    <p style="color: var(--text-secondary); margin-bottom: 50px;">Access tailored insights for your specific operational
+        needs.</p>
+
+    <div class="grid">
+        <a href="/owner" class="card glass role-owner"
+            style="text-decoration: none; color: inherit; transition: transform 0.2s;">
+            <h3>Owner / Operator</h3>
+            <p style="color: var(--text-secondary);">View high-level KPIs, risk assessment, and revenue impact.</p>
+        </a>
+
+        <a href="/maintenance" class="card glass role-maintenance"
+            style="text-decoration: none; color: inherit; transition: transform 0.2s;">
+            <h3>Maintenance Lead</h3>
+            <p style="color: var(--text-secondary);">Plan resources, order parts, and manage logistics.</p>
+        </a>
+
+        <a href="/technician" class="card glass role-technician"
+            style="text-decoration: none; color: inherit; transition: transform 0.2s;">
+            <h3>Technician</h3>
+            <p style="color: var(--text-secondary);">Access diagnostic guides and repair checklists.</p>
+        </a>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('mouseenter', () => card.style.transform = 'translateY(-5px)');
+        card.addEventListener('mouseleave', () => card.style.transform = 'translateY(0)');
+    });
+</script>
+{% endblock %}

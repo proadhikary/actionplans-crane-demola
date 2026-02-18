@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="header">
+    <h1>Owner Dashboard</h1>
+    <p>Operational Confidence & Risk Assessment</p>
+</div>
+
+<div class="grid" style="margin-bottom: 24px;">
+    <!-- Operational Efficiency -->
+    <div class="card glass role-owner">
+        <h3>Operational Efficiency</h3>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+                <p style="color: var(--text-secondary); margin: 0;">Fleet Availability</p>
+                <div class="metric-group">
+                    <div class="metric" id="uptime-val">--</div>
+                    <span class="metric-unit">%</span>
+                </div>
+            </div>
+            <div class="status-badge status-optimal">Target Met (>98%)</div>
+        </div>
+        <p style="margin-top: 12px; font-size: 0.9em; color: var(--text-secondary);">
+            0 Unplanned Downtime events this week.
+        </p>
+    </div>
+
+    <!-- Financial Overview -->
+    <div class="card glass role-owner">
+        <h3>Cost Analysis (Monthly)</h3>
+        <div style="margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="color: var(--text-secondary); font-size: 0.9em;">Budget Utilization</span>
+                <strong id="budget-val" style="font-size: 0.9em;">-- / --</strong>
+            </div>
+            <div style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+                <div id="budget-bar" style="width: 0%; height: 100%; background: var(--accent-blue);"></div>
+            </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+                <p style="color: var(--text-secondary); margin: 0; font-size: 0.9em;">Projected Savings</p>
+                <div class="metric-group">
+                    <span class="metric-unit" style="color: var(--accent-green);">+$</span>
+                    <div class="metric" style="color: var(--accent-green);" id="savings-val">--</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid">
+    <!-- Risk vs Revenue Card -->
+    <div class="card glass role-owner">
+        <h3>Risk vs. Revenue</h3>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+                <p style="color: var(--text-secondary); margin: 0;">Projected Revenue (Week)</p>
+                <div class="metric-group">
+                    <span class="metric-unit">$</span>
+                    <div class="metric">42,500</div>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <p style="color: var(--text-secondary); margin: 0; margin-bottom: 8px;">Operational Risk</p>
+                <div class="status-badge status-optimal" id="risk-badge">Low Risk</div>
+            </div>
+        </div>
+        <div
+            style="margin-top: 24px; height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+            <div id="risk-bar"
+                style="width: 98%; height: 100%; background: var(--accent-green); transition: width 0.5s, background-color 0.5s;">
+            </div>
+        </div>
+        <p style="margin-top: 16px; font-size: 0.9em; color: var(--text-secondary);">
+            Crane uptime is contributing to <strong style="color: var(--text-primary);">98%</strong> of target revenue.
+        </p>
+    </div>
+
+    <!-- Resource Approvals (New) -->
+    <div class="card glass">
+        <h3>Resource Approvals</h3>
+        <div id="approvals-feed" style="max-height: 200px; overflow-y: auto;">
+            <p style="color: var(--text-secondary); font-style: italic;">Loading requests...</p>
+        </div>
+    </div>
+
+    <!-- System-Wide Audit Log -->
+    <div class="card glass" style="flex: 1; min-width: 300px;">
+        <h3>System-Wide Audit Log</h3>
+        <div id="activity-feed" style="max-height: 400px; overflow-y: auto;">
+            <!-- Feed items -->
+        </div>
+    </div>
+</div>
+
+<div class="glass card" style="margin-top: 24px; border-top: 4px solid var(--accent-blue);">
+    <h3>Executive Decision Support</h3>
+    <div id="latest-prescription">
+        <p style="color: var(--text-secondary);">No critical decisions required at this time.</p>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function logDecision(decision, eventId) {
+        if (!confirm(`Confirm ${decision} decision?`)) return;
+
+        await fetch('/api/decisions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ decision: decision, event_id: eventId, role: 'owner' })
+        });
+
+        // If it was a shutdown/resolution, we might want to also resolve the event
+        if (decision === 'Shutdown' || decision === 'Approve Repairs') {
+            await fetch(`/api/events/${eventId}/resolve`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notes: `Owner Decision: ${decision}` })
+            });
+        }
+
+        loadData();
+        alert("Decision logged successfully.");
+    }
+
+    async function approvePart(id, partName) {
+        if (!confirm(`Approve purchase of ${partName}?`)) return;
+        try {
+            await fetch(`/api/parts/approve/${id}`, { method: 'POST' });
+            alert("Purchase approved.");
+            loadData();
+        } catch (e) { console.error(e); }
+    }
+
+    async function loadData() {
+        // -1. Fetch Business Metrics
+        const bizRes = await fetch('/api/business/metrics');
+        const biz = await bizRes.json();
+
+        document.getElementById('uptime-val').innerText = biz.uptime_pct;
+
+        const spend = biz.maintenance_spend.toLocaleString();
+        const budget = biz.maintenance_budget.toLocaleString();
+        const pct = Math.round((biz.maintenance_spend / biz.maintenance_budget) * 100);
+
+        document.getElementById('budget-val').innerText = `$${spend} / $${budget}`;
+        document.getElementById('budget-bar').style.width = `${pct}%`;
+        document.getElementById('savings-val').innerText = biz.avoided_downtime_savings.toLocaleString();
+
+        // 0. Fetch Approvals
+        const appRes = await fetch('/api/parts/requests?status=pending');
+        const approvals = await appRes.json();
+        const appFeed = document.getElementById('approvals-feed');
+
+        if (approvals.length === 0) {
+            appFeed.innerHTML = '<p style="color: var(--text-secondary); font-style: italic;">No pending approvals.</p>';
+        } else {
+            appFeed.innerHTML = approvals.map(req => `
+                <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong style="display: block; color: var(--text-primary);">${req.part_name}</strong>
+                        <span style="font-size: 0.8em; color: var(--text-secondary);">Req by ${req.requester_role}</span>
+                    </div>
+                    <button onclick="approvePart('${req.id}', '${req.part_name}')" class="btn btn-primary" style="font-size: 0.8em; padding: 6px 12px;">Approve</button>
+                </div>
+            `).join('');
+        }
+
+        // 1. Fetch Audit Log
+        const logRes = await fetch('/api/audit_log');
+        const logs = await logRes.json();
+
+        const feed = document.getElementById('activity-feed');
+        if (feed) {
+            feed.innerHTML = '';
+            logs.forEach(log => {
+                const div = document.createElement('div');
+                div.style.padding = '8px 0';
+                div.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                div.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <strong style="color: var(--text-primary); font-size: 0.95em;">${log.role}</strong>
+                        <span style="font-size: 0.8em; color: var(--text-secondary);">${new Date(log.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                    <div style="font-size: 0.9em; color: var(--text-secondary);">
+                        <span style="color: var(--accent-blue); font-weight: 500;">${log.action}</span>
+                        ${log.details ? ` - ${log.details}` : ''}
+                    </div>
+                `;
+                feed.appendChild(div);
+            });
+        }
+
+        // 2. Fetch Active Events for Decision Support
+        const response = await fetch('/api/events?status=active');
+        const activeEvents = await response.json();
+
+        // Filter out events where Owner has already made a decision
+        const pendingEvents = activeEvents.filter(e => !e.owner_decision);
+
+        const riskBadge = document.getElementById('risk-badge');
+        const riskBar = document.getElementById('risk-bar');
+        const decisionDiv = document.getElementById('latest-prescription');
+
+        if (pendingEvents.length === 0) {
+            // Reset Risk UI
+            riskBadge.className = 'status-badge status-optimal';
+            riskBadge.innerText = 'Low Risk';
+            riskBar.style.width = '98%';
+            riskBar.style.backgroundColor = 'var(--accent-green)';
+
+            decisionDiv.innerHTML = '<p style="color: var(--text-secondary);">No critical decisions required at this time.</p>';
+            return;
+        }
+
+        const latest = pendingEvents[0];
+        const decisionClass = latest.decision_class || (latest.severity > 0.7 ? "STOP" : (latest.severity > 0.4 ? "MONITOR" : "OPERATE"));
+
+        // Update Risk Experience based on Decision Class
+        if (decisionClass === 'STOP') {
+            riskBadge.className = 'status-badge status-critical';
+            riskBadge.innerText = 'CRITICAL RISK - STOP OPERATION';
+            riskBadge.style.background = 'rgba(239, 68, 68, 0.2)';
+            riskBadge.style.color = '#fca5a5';
+            riskBadge.style.border = '1px solid #ef4444';
+
+            riskBar.style.backgroundColor = 'var(--accent-red)';
+            riskBar.style.width = '90%';
+        } else if (decisionClass === 'MONITOR') {
+            riskBadge.className = 'status-badge status-warning';
+            riskBadge.innerText = 'CAUTION - MONITOR CLOSELY';
+            riskBadge.style.background = 'rgba(245, 158, 11, 0.2)';
+            riskBadge.style.color = '#fcd34d';
+            riskBar.style.backgroundColor = 'var(--accent-yellow)';
+            riskBar.style.width = '60%';
+        } else {
+            riskBadge.className = 'status-badge status-optimal';
+            riskBadge.innerText = 'OPTIMAL - CONTINUE OPERATION';
+            riskBar.style.backgroundColor = 'var(--accent-green)';
+            riskBar.style.width = '95%';
+        }
+
+        // Update Decision Support
+        if (latest.prescription && latest.prescription.role_guidance) {
+            decisionDiv.innerHTML = `
+                <div style="background: rgba(0,0,0,0.2); padding: 24px; border-radius: 12px;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                        <h4 style="margin: 0; color: var(--accent-blue);">AI Recommended Decision: ${decisionClass}</h4>
+                        ${latest.confidence_score ? `<span class="status-badge" style="background: rgba(59, 130, 246, 0.2); color: #93c5fd;">${latest.confidence_score}% Confidence</span>` : ''}
+                    </div>
+                    
+                    <p style="font-size: 1.1em; margin-bottom: 24px; line-height: 1.5;">${latest.prescription.role_guidance.owner}</p>
+                    
+                    <div style="display: flex; gap: 16px;">
+                        <button onclick="logDecision('Approve Continued Operation', '${latest.id}')" class="btn btn-primary" ${decisionClass === 'STOP' ? 'style="opacity: 0.5; pointer-events: none;"' : ''}>Approve Operation</button>
+                        <button onclick="logDecision('Shutdown', '${latest.id}')" class="btn btn-destructive">Request Shutdown</button>
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    setInterval(loadData, 3000); // Poll every 3 seconds
+    loadData();
+</script>
+{% endblock %}

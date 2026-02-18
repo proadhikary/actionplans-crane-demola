@@ -1,0 +1,491 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="header">
+    <h1>Diagnostic Hub</h1>
+    <p>Real-time Telemetry & Active Diagnostics</p>
+</div>
+
+<div class="grid">
+    <!-- Main Telemetry Card -->
+    <div class="card glass role-technician" style="grid-column: span 2;">
+        <h3>Asset Health Telemetry</h3>
+        <div class="chart-container">
+            <canvas id="telemetryChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Live Metrics Grid -->
+    <div class="card glass">
+        <h3>Live Metrics</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+                <p style="color: var(--text-secondary); margin: 0; font-size: 0.9em;">Vibration</p>
+                <div class="metric-group">
+                    <div class="metric" id="vibration">--</div>
+                    <span class="metric-unit">mm/s</span>
+                </div>
+            </div>
+            <div>
+                <p style="color: var(--text-secondary); margin: 0; font-size: 0.9em;">Temperature</p>
+                <div class="metric-group">
+                    <div class="metric" id="temp">--</div>
+                    <span class="metric-unit">°C</span>
+                </div>
+            </div>
+            <div>
+                <p style="color: var(--text-secondary); margin: 0; font-size: 0.9em;">Motor Current</p>
+                <div class="metric-group">
+                    <div class="metric" id="current">--</div>
+                    <span class="metric-unit">A</span>
+                </div>
+            </div>
+            <div>
+                <p style="color: var(--text-secondary); margin: 0; font-size: 0.9em;">Oil Pressure</p>
+                <div class="metric-group">
+                    <div class="metric" id="oil">--</div>
+                    <span class="metric-unit">Bar</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary Metrics -->
+    <div class="card glass">
+        <h3>Component Lifecycle</h3>
+        <div style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <span style="color: var(--text-secondary);">Brake Health</span>
+                <span id="brake-val">--%</span>
+            </div>
+            <div style="height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                <div id="brake-bar"
+                    style="width: 0%; height: 100%; background: var(--accent-green); transition: width 1s;"></div>
+            </div>
+        </div>
+        <div>
+            <p style="color: var(--text-secondary); margin: 0; font-size: 0.9em;">Total Motor Hours</p>
+            <div class="metric-group">
+                <div class="metric" id="hours">--</div>
+                <span class="metric-unit">hrs</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deep Data Grid (New Sensors) -->
+    <div class="card glass">
+        <h3>Subsystem Status</h3>
+        <div style="display: grid; grid-template-columns: 1fr; gap: 12px;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 8px;">
+                <span style="color: var(--text-secondary);">Gearbox Oil Temp</span>
+                <strong id="gearbox-temp">-- °C</strong>
+            </div>
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 8px;">
+                <span style="color: var(--text-secondary);">Hydraulic Pressure</span>
+                <strong id="hydraulic-press">-- Bar</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--text-secondary);">Voltage Imbalance</span>
+                <strong id="voltage-imb">-- %</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deep Component Wear (New) -->
+    <div class="card glass">
+        <h3>Component Wear</h3>
+        <div style="display: grid; grid-template-columns: 1fr; gap: 12px;">
+            <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="color: var(--text-secondary); font-size: 0.9em;">Main Bearing Wear</span>
+                    <strong id="bearing-wear-val" style="font-size: 0.9em;">--%</strong>
+                </div>
+                <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                    <div id="bearing-wear-bar"
+                        style="width: 0%; height: 100%; background: var(--accent-green); transition: width 0.5s;"></div>
+                </div>
+            </div>
+            <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="color: var(--text-secondary); font-size: 0.9em;">Hoist Motor Wear</span>
+                    <strong id="hoist-wear-val" style="font-size: 0.9em;">--%</strong>
+                </div>
+                <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                    <div id="hoist-wear-bar"
+                        style="width: 0%; height: 100%; background: var(--accent-green); transition: width 0.5s;"></div>
+                </div>
+            </div>
+            <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span style="color: var(--text-secondary); font-size: 0.9em;">Cable Wear</span>
+                    <strong id="cable-wear-val" style="font-size: 0.9em;">--%</strong>
+                </div>
+                <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+                    <div id="cable-wear-bar"
+                        style="width: 0%; height: 100%; background: var(--accent-green); transition: width 0.5s;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Active Diagnosis Section -->
+<div class="card glass" style="margin-top: 24px; border-top: 4px solid var(--accent-red);">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <h3>Active Diagnosis</h3>
+        <button id="trigger-scan" class="btn btn-primary">Run Diagnostic Scan</button>
+    </div>
+
+    <div id="diagnostic-area" style="margin-top: 10px;">
+        <p style="color: var(--text-secondary);">System status normal. No active alerts.</p>
+    </div>
+</div>
+
+<!-- New: Diagnostic History -->
+<div class="card glass" style="margin-top: 24px;">
+    <h3>Diagnostic History</h3>
+    <div id="tech-log" style="max-height: 200px; overflow-y: auto;">
+        <!-- Injected via JS -->
+    </div>
+</div>
+
+<!-- Verification Modal (Hidden by default) -->
+<dialog id="verification-modal" class="glass"
+    style="border: 1px solid var(--card-border); color: var(--text-primary); padding: 24px; border-radius: 12px; max-width: 500px; width: 100%;">
+    <h3 style="margin-top: 0;">Verify Fix</h3>
+    <p style="color: var(--text-secondary); margin-bottom: 16px;">Complete the following protocol to sign off on this
+        issue.</p>
+
+    <div id="checklist-container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px;">
+        <!-- Checkboxes injected by JS -->
+    </div>
+
+    <div style="text-align: right; display: flex; justify-content: flex-end; gap: 10px;">
+        <button onclick="document.getElementById('verification-modal').close()" class="btn btn-outline">Cancel</button>
+        <button id="submit-verification" class="btn btn-primary" disabled>Sign Off & Resolve</button>
+    </div>
+</dialog>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let chart;
+
+    // Initialize Chart.js
+    function initChart() {
+        const ctx = document.getElementById('telemetryChart').getContext('2d');
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Vibration (mm/s)',
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    data: [],
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }, {
+                    label: 'Temperature (°C)',
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245, 158, 11, 0.05)',
+                    data: [],
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#94a3b8' } }
+                },
+                scales: {
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#94a3b8' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { display: false } // Hide time labels for cleanliness
+                    }
+                },
+                animation: false
+            }
+        });
+    }
+
+    async function loadData() {
+        try {
+            // 1. Fetch Current Telemetry
+            const telemetryRes = await fetch('/api/telemetry');
+            const tm = await telemetryRes.json();
+
+            document.getElementById('vibration').innerText = tm.vibration_mm_s;
+            document.getElementById('temp').innerText = tm.temperature_c;
+            document.getElementById('current').innerText = tm.motor_current_a;
+            document.getElementById('oil').innerText = tm.oil_pressure_bar;
+            document.getElementById('hours').innerText = tm.motor_hours;
+
+            // Deep Sensors
+            document.getElementById('gearbox-temp').innerText = tm.gearbox_oil_temp_c + " °C";
+            document.getElementById('hydraulic-press').innerText = tm.hydraulic_pressure_bar + " Bar";
+            document.getElementById('voltage-imb').innerText = tm.voltage_imbalance_pct + " %";
+
+            // Component Wear - Map 0.0-1.0 to 0-100% (where 1.0 is failure, so we invert for Health if needed, but let's show Wear %)
+            // Let's interpret the simulator: 0.05 wear = 5% wear (95% health). Let's show Wear.
+            const updateWear = (id, val) => {
+                const pct = Math.round(val * 100);
+                document.getElementById(`${id}-val`).innerText = pct + '%';
+                const bar = document.getElementById(`${id}-bar`);
+                bar.style.width = pct + '%';
+                // Color logic: Low wear = Green, High wear = Red
+                if (pct < 50) bar.style.background = 'var(--accent-green)';
+                else if (pct < 80) bar.style.background = 'var(--accent-yellow)';
+                else bar.style.background = 'var(--accent-red)';
+            };
+
+            updateWear('bearing-wear', tm.main_bearing);
+            updateWear('hoist-wear', tm.hoist_motor);
+            updateWear('cable-wear', tm.cable_tension);
+
+            // Brake Health
+            const brakePct = tm.brake_health_pct;
+            document.getElementById('brake-val').innerText = brakePct + '%';
+            const brakeBar = document.getElementById('brake-bar');
+            brakeBar.style.width = brakePct + '%';
+            brakeBar.style.background = brakePct < 40 ? 'var(--accent-red)' : 'var(--accent-green)';
+
+            // 2. Fetch History (Chart)
+            const historyRes = await fetch('/api/history');
+            const history = await historyRes.json();
+
+            if (chart) {
+                chart.data.labels = history.map(d => d.timestamp);
+                chart.data.datasets[0].data = history.map(d => d.vibration_mm_s);
+                chart.data.datasets[1].data = history.map(d => d.temperature_c);
+                chart.update();
+            }
+
+            // 3. Fetch Active Events
+            const eventRes = await fetch('/api/events?status=active');
+            const events = await eventRes.json();
+            const diagArea = document.getElementById('diagnostic-area');
+
+            // 4. Fetch Audit Log for Context
+            const logRes = await fetch('/api/audit_log');
+            const logs = await logRes.json();
+
+            const recentMaintenance = logs.filter(l =>
+                l.role === 'Maintenance Lead' &&
+                (l.action.includes('Ordered') || l.action.includes('Scheduled')) &&
+                window.currentEvents && window.currentEvents[l.event_id] // Only show if linked to active event
+            );
+
+            let contextBanner = '';
+
+            if (recentMaintenance.length > 0) {
+                // Show the most recent actionable item
+                const latest = recentMaintenance[0];
+                contextBanner = `
+                    <div style="margin-bottom: 16px; padding: 12px; background: rgba(59, 130, 246, 0.1); border: 1px solid var(--accent-blue); border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 1.2em;">👷</span>
+                            <div>
+                                <strong style="color: var(--accent-blue); display: block;">Work Order: ${latest.action}</strong>
+                                <span style="color: var(--text-secondary); font-size: 0.9em;">${latest.details} (${new Date(latest.timestamp).toLocaleTimeString()})</span>
+                            </div>
+                        </div>
+                        <button onclick="openVerificationModal('${latest.event_id}')" class="btn btn-primary" style="font-size: 0.85em; padding: 6px 12px;">
+                            Complete Repair
+                        </button>
+                    </div>
+                `;
+            }
+
+            if (events.length > 0) {
+                diagArea.innerHTML = contextBanner; // Start with banner
+
+                // Store events globally for modal access
+                window.currentEvents = {};
+                events.forEach(e => window.currentEvents[e.id] = e);
+
+                // Iterate through ALL active events
+                events.forEach(event => {
+                    const severityColor = event.severity > 0.7 ? 'var(--accent-red)' : 'var(--accent-yellow)';
+
+                    const eventCard = document.createElement('div');
+                    eventCard.style.cssText = `background: rgba(0,0,0,0.2); padding: 20px; border-radius: 12px; border-left: 4px solid ${severityColor}; margin-bottom: 16px;`;
+
+                    eventCard.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div>
+                                <h4 style="margin-bottom: 8px; color: ${severityColor}; font-size: 1.1em;">${event.type}</h4>
+                                <p style="margin: 0; color: var(--text-primary);">${event.prescription.action}</p>
+                            </div>
+                            <span class="status-badge status-critical">Active Alert</span>
+                        </div>
+                        
+                        <div style="margin-top: 16px; font-size: 0.95em; color: var(--text-secondary);">
+                            <p><strong>Guidance:</strong> ${event.prescription.role_guidance ? event.prescription.role_guidance.technician : 'Perform standard diagnostic.'}</p>
+                        </div>
+
+                        <!-- Rich Diagnosis Data -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; font-size: 0.9em;">
+                            <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                                <strong style="display: block; color: var(--accent-blue); margin-bottom: 4px;">⏱️ Est. Time</strong>
+                                <span style="color: var(--text-primary);">${event.prescription.estimated_fix_time || 'Unknown'}</span>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                                <strong style="display: block; color: var(--accent-blue); margin-bottom: 4px;">🎯 Root Cause</strong>
+                                <span style="color: var(--text-primary);">${event.prescription.root_cause_probability || 'Analysis pending'}</span>
+                            </div>
+                        </div>
+                        
+                        ${event.prescription.required_tools && event.prescription.required_tools.length > 0 ? `
+                        <div style="margin-top: 12px; font-size: 0.9em;">
+                            <strong style="color: var(--text-secondary);">🛠️ Required Tools:</strong>
+                            <span style="color: var(--text-primary); margin-left: 8px;">${event.prescription.required_tools.join(', ')}</span>
+                        </div>` : ''}
+                        
+                        <!-- Confidence Score from AI -->
+                        ${event.urgency_score ? `
+                        <div style="margin-top: 12px; font-size: 0.8em; color: var(--text-secondary);">
+                            <span style="color: var(--text-primary);">AI Confidence Score:</span> ${event.urgency_score * 10}%
+                        </div>` : ''}
+
+                       <div style="margin-top: 20px; text-align: right;">
+                           <button onclick="openVerificationModal('${event.id}')" class="btn btn-outline" style="font-size: 0.85em;">
+                                Verify & Resolve
+                           </button>
+                       </div>
+                    `;
+                    diagArea.appendChild(eventCard);
+                });
+
+            } else {
+                diagArea.innerHTML = contextBanner + '<p style="color: var(--text-secondary); font-style: italic;">All systems nominal. No active alerts requiring attention.</p>';
+            }
+
+        } catch (e) {
+            console.error("Data fetch error:", e);
+        }
+    }
+
+    // Modal Logic
+    function openVerificationModal(eventId) {
+        const event = window.currentEvents[eventId];
+        if (!event) return;
+
+        const modal = document.getElementById('verification-modal');
+        const container = document.getElementById('checklist-container');
+        const submitBtn = document.getElementById('submit-verification');
+
+        container.innerHTML = '';
+        submitBtn.disabled = true;
+        submitBtn.onclick = () => submitResolution(event.id);
+
+        // Default protocol if none from AI
+        const protocols = (event.prescription && event.prescription.verification_protocol)
+            ? event.prescription.verification_protocol
+            : ["Inspect component for physical damage", "Verify sensor mounting tightness", "Check for loose cabling"];
+
+        protocols.forEach((step, index) => {
+            const div = document.createElement('div');
+            div.innerHTML = `
+                <label style="display: flex; gap: 10px; align-items: center; cursor: pointer;">
+                    <input type="checkbox" class="verify-check" onchange="checkCompletion()">
+                    <span>${step}</span>
+                </label>
+            `;
+            container.appendChild(div);
+        });
+
+        modal.showModal();
+    }
+
+    function checkCompletion() {
+        const checks = document.querySelectorAll('.verify-check');
+        const allChecked = Array.from(checks).every(c => c.checked);
+        document.getElementById('submit-verification').disabled = !allChecked;
+    }
+
+    async function submitResolution(eventId) {
+        const checks = Array.from(document.querySelectorAll('.verify-check:checked')).map(c => c.nextElementSibling.innerText);
+
+        // 1. Submit Verification Protocol
+        await fetch('/api/verify_fix', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ event_id: eventId, checks: checks })
+        });
+
+        // 2. Resolve Event
+        await fetch(`/api/events/${eventId}/resolve`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notes: 'Verified via strictly followed protocol.' })
+        });
+
+        document.getElementById('verification-modal').close();
+        loadData();
+    }
+
+    document.getElementById('trigger-scan').addEventListener('click', async () => {
+        const btn = document.getElementById('trigger-scan');
+        const originalText = btn.innerText;
+        btn.innerText = "Running Diagnostics...";
+        btn.disabled = true;
+
+        try {
+            await fetch('/api/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.disabled = false;
+                loadData();
+            }, 1500);
+        } catch (e) {
+            console.error(e);
+            btn.innerText = "Error";
+        }
+    });
+
+    initChart();
+    setInterval(loadData, 2000);
+    loadData();
+
+    // New: Load Technician Logs
+    setInterval(loadTechLogs, 5000);
+    loadTechLogs();
+
+    async function loadTechLogs() {
+        const res = await fetch('/api/audit_log?role=Technician');
+        const logs = await res.json();
+        const container = document.getElementById('tech-log');
+
+        if (logs.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-secondary); font-style: italic;">No recent activity.</p>';
+        } else {
+            container.innerHTML = logs.map(l => `
+                <div style="border-bottom: 1px solid var(--card-border); padding: 8px 0; font-size: 0.9em;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                        <strong style="color: var(--accent-green);">${l.action}</strong>
+                        <span style="color: var(--text-secondary); font-size: 0.8em;">${new Date(l.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                    <div style="color: var(--text-secondary);">${l.details}</div>
+                </div>
+            `).join('');
+        }
+    }
+</script>
+{% endblock %}
