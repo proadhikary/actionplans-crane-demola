@@ -4,14 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏗️</text></svg>">
-    <meta name="description" content="Industrial IoT Crane Monitor - Predictive maintenance and AI-driven decision support system.">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏗️</text></svg>">
+    <meta name="description"
+        content="Industrial IoT Crane Monitor - Predictive maintenance and AI-driven decision support system.">
     <meta name="keywords" content="Industrial IoT, Predictive Maintenance, Crane, AI, Gemini, Digital Twin">
     <meta name="author" content="Crane.AI Team">
     <title>{% block title %}Crane Prescriptive Maintenance{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=2">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
     {% block head %}{% endblock %}
 </head>
 
@@ -19,7 +24,10 @@
     <div class="container">
         <nav>
             <a href="/" class="logo">CRANE.AI</a>
-            <div class="nav-links">
+            <button class="menu-toggle" aria-label="Toggle navigation">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="nav-links" id="navLinks">
                 <a href="/owner" class="nav-link {% if request.path == '/owner' %}active{% endif %}">Owner</a>
                 <a href="/maintenance"
                     class="nav-link {% if request.path == '/maintenance' %}active{% endif %}">Maintenance</a>
@@ -36,6 +44,27 @@
         function formatDate(isoString) {
             return new Date(isoString).toLocaleString();
         }
+
+        // Mobile Menu Toggle
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuToggle = document.querySelector('.menu-toggle');
+            const navLinks = document.getElementById('navLinks');
+            const icon = menuToggle.querySelector('i');
+
+            if (menuToggle && navLinks) {
+                menuToggle.addEventListener('click', () => {
+                    navLinks.classList.toggle('open');
+
+                    if (navLinks.classList.contains('open')) {
+                        icon.classList.remove('fa-bars');
+                        icon.classList.add('fa-times');
+                    } else {
+                        icon.classList.remove('fa-times');
+                        icon.classList.add('fa-bars');
+                    }
+                });
+            }
+        });
     </script>
     {% block scripts %}{% endblock %}
 </body>
