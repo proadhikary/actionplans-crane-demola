@@ -1,23 +1,25 @@
 :root {
-    --bg-color: #0f172a;
-    /* Slate 900 */
-    --card-bg: rgba(30, 41, 59, 0.7);
-    /* Slate 800 with opacity */
-    --card-border: rgba(148, 163, 184, 0.1);
-    --text-primary: #f8fafc;
+    --bg-color: #f8fafc;
     /* Slate 50 */
-    --text-secondary: #94a3b8;
-    /* Slate 400 */
+    --card-bg: rgba(255, 255, 255, 0.8);
+    /* White with opacity */
+    --card-border: rgba(148, 163, 184, 0.3);
+    --text-primary: #0f172a;
+    /* Slate 900 */
+    --text-secondary: #475569;
+    /* Slate 600 */
     --accent-green: #10b981;
     /* Emerald 500 */
     --accent-yellow: #f59e0b;
     /* Amber 500 */
     --accent-red: #ef4444;
     /* Red 500 */
-    --accent-blue: #3b82f6;
-    /* Blue 500 */
-    --accent-purple: #8b5cf6;
-    /* Violet 500 */
+    --accent-blue: #FF2301;
+    /* Konecranes Primary Red */
+    --accent-purple: #A50E8F;
+    /* Konecranes Magenta */
+    --brand-tertiary: #D46A5A;
+    /* Konecranes Coral */
     --font-family: 'Inter', system-ui, -apple-system, sans-serif;
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -26,7 +28,7 @@
 
 body {
     background-color: var(--bg-color);
-    background-image: radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%), radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+    background-image: radial-gradient(at 0% 0%, #FF230126 0px, transparent 50%), radial-gradient(at 100% 0%, #A50E8F26 0px, transparent 50%);
     background-attachment: fixed;
     color: var(--text-primary);
     font-family: var(--font-family);
@@ -107,7 +109,7 @@ nav {
     padding: 16px 24px;
     /* Reduced padding slightly for mobile */
     margin-bottom: 40px;
-    background: rgba(15, 23, 42, 0.6);
+    background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
     border-radius: 16px;
     border: 1px solid var(--card-border);
@@ -117,14 +119,9 @@ nav {
 }
 
 .logo {
-    font-size: 1.5rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    display: flex;
+    align-items: center;
     text-decoration: none;
-    letter-spacing: -0.05em;
 }
 
 .nav-links {
@@ -146,11 +143,11 @@ nav {
 
 .nav-link:hover {
     color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.05);
 }
 
 .nav-link.active {
-    background: rgba(59, 130, 246, 0.15);
+    background: rgba(255, 35, 1, 0.1);
     color: var(--accent-blue);
 }
 
@@ -191,7 +188,7 @@ nav {
         right: 0;
         background: var(--bg-color);
         /* Solid background or glass */
-        background: rgba(15, 23, 42, 0.95);
+        background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(16px);
         padding: 24px;
         margin-top: 8px;
@@ -329,13 +326,13 @@ nav {
 .btn-primary {
     background: var(--accent-blue);
     color: white;
-    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 6px -1px rgba(255, 35, 1, 0.3);
 }
 
 .btn-primary:hover {
-    background: #2563eb;
-    /* Blue 600 */
-    box-shadow: 0 6px 8px -1px rgba(59, 130, 246, 0.4);
+    background: var(--brand-tertiary);
+    /* Lighter Red */
+    box-shadow: 0 6px 8px -1px rgba(255, 35, 1, 0.4);
 }
 
 .btn-destructive {
@@ -403,15 +400,15 @@ nav {
 
 /* Role Specific Accents (Subtle border top) */
 .role-owner {
-    border-top: 4px solid var(--accent-purple);
+    border-top: 4px solid var(--accent-blue);
 }
 
 .role-maintenance {
-    border-top: 4px solid var(--accent-yellow);
+    border-top: 4px solid var(--brand-tertiary);
 }
 
 .role-technician {
-    border-top: 4px solid var(--accent-green);
+    border-top: 4px solid var(--accent-purple);
 }
 
 /* Chart Container */
@@ -475,7 +472,7 @@ nav {
     line-height: 1.2;
     margin-bottom: 1.5rem;
     font-weight: 800;
-    background: linear-gradient(to right, #ffffff, #94a3b8);
+    background: linear-gradient(to right, #0f172a, #475569);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -502,7 +499,7 @@ nav {
 .hero-image {
     max-width: 100%;
     height: auto;
-    filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.3));
+    filter: drop-shadow(0 0 20px rgba(255, 35, 1, 0.15));
     border-radius: 16px;
 }
 
@@ -536,7 +533,7 @@ nav {
     margin-bottom: 1.5rem;
     display: inline-block;
     padding: 12px;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.05);
     border-radius: 12px;
 }
 
@@ -563,7 +560,7 @@ nav {
     justify-content: space-around;
     flex-wrap: wrap;
     gap: 20px;
-    background: rgba(15, 23, 42, 0.6);
+    background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);
     border: 1px solid var(--card-border);
     border-radius: 16px;
