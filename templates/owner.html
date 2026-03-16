@@ -1,59 +1,81 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="header">
+<style>
+    /* Responsive Layout Styles */
+    .dashboard-header {
+        margin-bottom: 24px;
+    }
+
+    /* Row 1: Actions (2 Columns) */
+    .grid-row-actions {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        /* Decision support slightly wider for readability */
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+
+    /* Row 2: Metrics (3 Columns) */
+    .grid-row-metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+
+    /* Row 3: Logs (1 Column) */
+    .grid-row-logs {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+
+    /* Mobile breakpoint */
+    @media (max-width: 900px) {
+        .grid-row-actions {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Helper for internal card layouts on small screens */
+    .flex-wrap-mobile {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+</style>
+
+<div class="header dashboard-header">
     <h1>Owner Dashboard</h1>
     <p>Operational Confidence & Risk Assessment</p>
 </div>
 
-<div class="grid" style="margin-bottom: 24px;">
-    <!-- Operational Efficiency -->
-    <div class="card glass role-owner">
-        <h3>Operational Efficiency</h3>
-        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-            <div>
-                <p style="color: var(--text-secondary); margin: 0;">Fleet Availability</p>
-                <div class="metric-group">
-                    <div class="metric" id="uptime-val">--</div>
-                    <span class="metric-unit">%</span>
-                </div>
-            </div>
-            <div class="status-badge status-optimal">Target Met (>98%)</div>
+<div class="grid-row-actions">
+    <div class="glass card hero-decision"
+        style="border-top: 4px solid var(--accent-blue); display: flex; flex-direction: column;">
+        <h3 style="margin-top: 0;">Executive Decision Support</h3>
+        <div id="latest-prescription"
+            style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
+            <p style="color: var(--text-secondary);">No critical decisions required at this time.</p>
         </div>
-        <p style="margin-top: 12px; font-size: 0.9em; color: var(--text-secondary);">
-            0 Unplanned Downtime events this week.
-        </p>
     </div>
 
-    <!-- Financial Overview -->
-    <div class="card glass role-owner">
-        <h3>Cost Analysis (Monthly)</h3>
-        <div style="margin-bottom: 16px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                <span style="color: var(--text-secondary); font-size: 0.9em;">Budget Utilization</span>
-                <strong id="budget-val" style="font-size: 0.9em;">-- / --</strong>
-            </div>
-            <div style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
-                <div id="budget-bar" style="width: 0%; height: 100%; background: var(--accent-blue);"></div>
-            </div>
-        </div>
-        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-            <div>
-                <p style="color: var(--text-secondary); margin: 0; font-size: 0.9em;">Projected Savings</p>
-                <div class="metric-group">
-                    <span class="metric-unit" style="color: var(--accent-green);">+$</span>
-                    <div class="metric" style="color: var(--accent-green);" id="savings-val">--</div>
-                </div>
-            </div>
+    <div class="card glass" style="display: flex; flex-direction: column;">
+        <h3 style="margin-top: 0;">Resource Approvals</h3>
+        <div id="approvals-feed" style="max-height: 250px; overflow-y: auto; padding-right: 8px; flex-grow: 1;">
+            <p style="color: var(--text-secondary); font-style: italic;">Loading requests...</p>
         </div>
     </div>
 </div>
 
-<div class="grid">
-    <!-- Risk vs Revenue Card -->
-    <div class="card glass role-owner">
-        <h3>Risk vs. Revenue</h3>
-        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+<div class="grid-row-metrics">
+    <div class="card glass role-owner" style="display: flex; flex-direction: column; justify-content: center;">
+        <h3 style="margin-top: 0;">Risk vs. Revenue</h3>
+        <div class="flex-wrap-mobile">
             <div>
                 <p style="color: var(--text-secondary); margin: 0;">Projected Revenue (Week)</p>
                 <div class="metric-group">
@@ -72,32 +94,56 @@
                 style="width: 98%; height: 100%; background: var(--accent-green); transition: width 0.5s, background-color 0.5s;">
             </div>
         </div>
-        <p style="margin-top: 16px; font-size: 0.9em; color: var(--text-secondary);">
+        <p style="margin-top: 16px; font-size: 0.9em; color: var(--text-secondary); margin-bottom: 0;">
             Crane uptime is contributing to <strong style="color: var(--text-primary);">98%</strong> of target revenue.
         </p>
     </div>
 
-    <!-- Resource Approvals (New) -->
-    <div class="card glass">
-        <h3>Resource Approvals</h3>
-        <div id="approvals-feed" style="max-height: 200px; overflow-y: auto;">
-            <p style="color: var(--text-secondary); font-style: italic;">Loading requests...</p>
+    <div class="card glass role-owner">
+        <h3 style="margin-top: 0;">Operational Efficiency</h3>
+        <div class="flex-wrap-mobile">
+            <div>
+                <p style="color: var(--text-secondary); margin: 0;">Fleet Availability</p>
+                <div class="metric-group">
+                    <div class="metric" id="uptime-val">--</div>
+                    <span class="metric-unit">%</span>
+                </div>
+            </div>
+            <div class="status-badge status-optimal">Target Met (>98%)</div>
         </div>
+        <p style="margin-top: 12px; font-size: 0.9em; color: var(--text-secondary); margin-bottom: 0;">
+            0 Unplanned Downtime events this week.
+        </p>
     </div>
 
-    <!-- System-Wide Audit Log -->
-    <div class="card glass" style="flex: 1; min-width: 300px;">
-        <h3>System-Wide Audit Log</h3>
-        <div id="activity-feed" style="max-height: 400px; overflow-y: auto;">
-            <!-- Feed items -->
+    <div class="card glass role-owner">
+        <h3 style="margin-top: 0;">Cost Analysis (Monthly)</h3>
+        <div style="margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="color: var(--text-secondary); font-size: 0.9em;">Budget Utilization</span>
+                <strong id="budget-val" style="font-size: 0.9em;">-- / --</strong>
+            </div>
+            <div style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+                <div id="budget-bar" style="width: 0%; height: 100%; background: var(--accent-blue);"></div>
+            </div>
+        </div>
+        <div class="flex-wrap-mobile">
+            <div>
+                <p style="color: var(--text-secondary); margin: 0; font-size: 0.9em;">Projected Savings</p>
+                <div class="metric-group">
+                    <span class="metric-unit" style="color: var(--accent-green);">+$</span>
+                    <div class="metric" style="color: var(--accent-green);" id="savings-val">--</div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="glass card" style="margin-top: 24px; border-top: 4px solid var(--accent-blue);">
-    <h3>Executive Decision Support</h3>
-    <div id="latest-prescription">
-        <p style="color: var(--text-secondary);">No critical decisions required at this time.</p>
+<div class="grid-row-logs">
+    <div class="card glass">
+        <h3 style="margin-top: 0;">System-Wide Audit Log</h3>
+        <div id="activity-feed" style="max-height: 400px; overflow-y: auto; padding-right: 8px;">
+        </div>
     </div>
 </div>
 
@@ -248,14 +294,14 @@
         if (latest.prescription && latest.prescription.role_guidance) {
             decisionDiv.innerHTML = `
                 <div style="background: rgba(0,0,0,0.2); padding: 24px; border-radius: 12px;">
-                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 12px;">
                         <h4 style="margin: 0; color: var(--accent-blue);">AI Recommended Decision: ${decisionClass}</h4>
                         ${latest.confidence_score ? `<span class="status-badge" style="background: rgba(59, 130, 246, 0.2); color: #93c5fd;">${latest.confidence_score}% Confidence</span>` : ''}
                     </div>
                     
                     <p style="font-size: 1.1em; margin-bottom: 24px; line-height: 1.5;">${latest.prescription.role_guidance.owner}</p>
                     
-                    <div style="display: flex; gap: 16px;">
+                    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
                         <button onclick="logDecision('Approve Continued Operation', '${latest.id}')" class="btn btn-primary" ${decisionClass === 'STOP' ? 'style="opacity: 0.5; pointer-events: none;"' : ''}>Approve Operation</button>
                         <button onclick="logDecision('Shutdown', '${latest.id}')" class="btn btn-destructive">Request Shutdown</button>
                     </div>
